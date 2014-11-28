@@ -1,0 +1,11 @@
+2014-11-28 Olivia Theze
+	* Normalised code style and comments.
+	* Moved function prototypes and defines to header instead
+	* Added Vim modeline 
+	* Fixed Changelog format
+	* Fixed other style issues.
+
+2012-10-26 CA Irvin
+	* Removed sequence properties
+	* Added serial routines
+
