@@ -1,0 +1,11 @@
+Some notes for the controller
+=============================
+
+Button System
+-------------
+
+	1) Save button state to regBtnOld
+	2) Scan buttons to regBtn
+	3) regBtnPulse = regBtnOld ^ regBtn
+
+	
