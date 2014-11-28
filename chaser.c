@@ -1,18 +1,23 @@
+/*
+ * =====================================================================================
+ *
+ *       Filename:  chaser.c
+ *
+ *    Description: 
+ *
+ *        Changed: 2014-11-28
+ *		
+ *      Author(s):  Corbin Irvin (cirvinfox)
+ *                  Olivia Theze (foxiepaws), fox@foxiepa.ws
+ *
+ * =====================================================================================
+ */
+
 /* 
- * Corbin Irvin 2011
- * 
- * Please see LICENSE for License details
+ * (c) 2011 Corbin Irvin 
  *
- * Changelog:
- * 2014-11-28 - Olivia Theze
- *   - Normalised code style and comments.
- *   - Moved function prototypes and defines to header instead
- *   - Added Vim modeline 
- *   - Fixed Changelog format
+ * Please see LICENSE for License details.
  *
- * 2012-10-26 - CA Irvin
- *   - Removed sequence properties
- *   - Added serial routines
  */
 
 /* #include <msp430g2221.h> */  
