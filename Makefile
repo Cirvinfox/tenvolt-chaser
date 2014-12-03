@@ -80,6 +80,7 @@ clean:
 	-$(RM) $(TARGET).elf
 	-$(RM) $(TARGET).hex
 	-$(RM) $(TARGET).txt
+	-$(RM) $(TARGET).map
 	-$(RM) $(SOURCES:.c=.lst)
 	-$(RM) $(DEPEND)
 prog: $(TARGET).elf
