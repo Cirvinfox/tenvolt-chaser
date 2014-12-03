@@ -45,9 +45,9 @@ void main(void)
 	IE1 |= WDTIE;							/* enable wtd interrupt */
   	
 	/* configure the internal oscillator */
-	BCSCTL1 = CALBC1_1MHZ_;	 /* set up for 1mhz stable operation without a crystal */
-	DCOCTL = CALDCO_1MHZ_;
-  
+	BCSCTL1 = RSEL3 + RSEL2 + RSEL1 + RSEL0;	/* set up for 15.25MHz internal oscillator */
+	DCOCTL = DCO2 + DCO1 + DCO0;
+
 	initIO();
 	/* enable interrupts */
 	/* dint(); */ /* opposite is  */
