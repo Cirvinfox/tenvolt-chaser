@@ -12,7 +12,7 @@ TARGET     = chaser
 MCU        = msp430g2221
 # List all the source files here
 # eg if you have a source file foo.c then list it here
-SOURCES =	main.c
+SOURCES =	chaser.c
 # Include are located in the Include directory
 INCLUDES = -IInclude
 # Add or subtract whatever MSPGCC flags you want. There are plenty more
