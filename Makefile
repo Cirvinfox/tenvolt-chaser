@@ -77,7 +77,9 @@ endif
 .PHONY:	clean
 clean:
 	-$(RM) $(OBJECTS)
-	-$(RM) $(TARGET).*
+	-$(RM) $(TARGET).elf
+	-$(RM) $(TARGET).hex
+	-$(RM) $(TARGET).txt
 	-$(RM) $(SOURCES:.c=.lst)
 	-$(RM) $(DEPEND)
 prog: $(TARGET).elf
