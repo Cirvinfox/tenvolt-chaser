@@ -37,6 +37,12 @@ volatile uint32_t   delayTime = 500; /* delay time in  milliseconds */
 volatile uint32_t	heartbeatStartTime;
 volatile uint32_t	oldTime;
 
+volatile uint8_t	programArray[MAXSTEPS] = { 0x01, 0x02, 0x04, 0x08};
+volatile int		programStep = 0;
+volatile int		programLength = 4;
+volatile uint8_t	programState = 1;
+volatile uint32_t	programCycleStartTime;
+
 void main(void)
 {
 	uint8_t keyreg = 0;
@@ -77,6 +83,7 @@ void main(void)
 */
 interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 {   
+	uint8_t temp;
 	/* increment the time counter */   	
 	regTimer++;
 	/* update the keys */
@@ -109,7 +116,58 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 		tapState = 0;
 		break;
 	}
+	
+	/* light sequence program state machine */
+	switch ( programState ) 
+	{
+		case 0:	/* program not running */
+			if(keyPulse & BIT2) /* if the startstop button is pressed, run prog */
+			{
+				programState = 1;
+			}
+			break;
 
+		case 1:	/* program running, cycle start */
+			if ( keyPulse & BIT2 ) /* turn off if we push the startstop button again */
+			{
+				programState = 0;
+			}
+			else
+			{
+				programCycleStartTime = regTimer;
+				programState = 2;
+			}
+			break;
+
+		case 2: /* program running, cycle step	 */
+			if(keyPulse & BIT2) /* turn off if we push the startstop button again */
+			{
+				programState = 0;
+			}
+			else if(regTimer >= (programCycleStartTime + delayTime))
+			{
+				/* time to go to the next step */
+				/* write the program to the port */
+				temp = P1OUT;
+				temp &= 0xF0;
+				temp |= programArray[programStep];
+				P1OUT = temp;
+				++programStep;
+				if(programStep > programLength - 1)
+				{
+					programStep = 0;
+				}
+				programState = 1;
+			}
+
+
+			break;
+
+		default:
+			programState = 0;			
+			break;
+	}			
+	
 
 	/* Control the heartbeat */
 	switch(heartbeatState)
@@ -144,40 +202,40 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 
 	/* Control the output channels, if a button is pressed,
 	 * the channel must be bumped. 
-     */
-	if(keyReg & BIT3)
-	{
-		_setPort(1, EN_CH1);
-	}
-	else
-	{
-		_clearPort(1, EN_CH1);
-	}
-	if(keyReg & BIT0)
-	{
-		_setPort(1, EN_CH2);
-	}
-	else
-	{
-		_clearPort(1, EN_CH2);
-	}
-	if(keyReg & BIT4)
-	{
-		_setPort(1, EN_CH3);
-	}
-	else
-	{
-		_clearPort(1, EN_CH3);
-	}
-	if(keyReg & BIT1)
-	{
-		_setPort(1, EN_CH4);
-	}
-	else
-	{
-		_clearPort(1, EN_CH4);
-	}
-
+    /*  |)}># */
+	/* if(keyReg & BIT3) */
+	/* { */
+	/* 	_setPort(1, EN_CH1); */
+	/* } */
+	/* else */
+	/* { */
+	/* 	_clearPort(1, EN_CH1); */
+	/* } */
+	/* if(keyReg & BIT0) */
+	/* { */
+	/* 	_setPort(1, EN_CH2); */
+	/* } */
+	/* else */
+	/* { */
+	/* 	_clearPort(1, EN_CH2); */
+	/* } */
+	/* if(keyReg & BIT4) */
+	/* { */
+	/* 	_setPort(1, EN_CH3); */
+	/* } */
+	/* else */
+	/* { */
+	/* 	_clearPort(1, EN_CH3); */
+	/* } */
+	/* if(keyReg & BIT1) */
+	/* { */
+	/* 	_setPort(1, EN_CH4); */
+	/* } */
+	/* else */
+	/* { */
+	/* 	_clearPort(1, EN_CH4); */
+	/* } */
+    /*  */
 
 } 
 
