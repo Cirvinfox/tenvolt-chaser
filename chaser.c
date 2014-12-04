@@ -33,8 +33,9 @@ volatile uint8_t	keyPulse;
 
 volatile int		tapState =0;
 volatile int		heartbeatState;
-volatile uint32_t   delayTime = 50000; /* delay time in half milliseconds */
+volatile uint32_t   delayTime = 500; /* delay time in  milliseconds */
 volatile uint32_t	heartbeatStartTime;
+volatile uint32_t	oldTime;
 
 void main(void)
 {
@@ -76,7 +77,6 @@ void main(void)
 */
 interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 {   
-	uint32_t oldTime;
 	/* increment the time counter */   	
 	regTimer++;
 	/* update the keys */
@@ -100,7 +100,7 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 		if(keyPulse & BIT5)
 		{
 			tapState = 0;
-			delayTime = regTimer - oldTime;
+			delayTime = (regTimer - oldTime);
 			heartbeatState = 0;
 		}
 		break;
