@@ -20,7 +20,6 @@
  *
  */
 
-/* #include <msp430g2221.h> */  
 #include <msp430.h>
 #include <signal.h>
 #include <inttypes.h>
@@ -75,7 +74,7 @@ void main(void)
 /* 	
 	this interrupt fires at 1KHz and does the pwm routine
 */
-interrupt(TIMERA0_VECTOR) WTD_interrupt(void)
+interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 {   
 	uint32_t oldTime;
 	/* increment the time counter */   	
