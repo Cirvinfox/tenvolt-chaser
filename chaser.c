@@ -33,7 +33,9 @@ volatile uint8_t	keyReg;          /* register that holds key state */
 volatile uint8_t	keyPulse;
 
 volatile int		tapState =0;
-volatile uint32_t   delayTime = 500; /* delay time in half milliseconds */
+volatile int		heartbeatState;
+volatile uint32_t   delayTime = 50000; /* delay time in half milliseconds */
+volatile uint32_t	heartbeatStartTime;
 
 void main(void)
 {
@@ -59,7 +61,6 @@ void main(void)
 	while(1)
 	{
 		delayMs(500);
-		_togglePort(2, LED_HEARTBEAT);
 	
 	}
 }
@@ -87,7 +88,6 @@ interrupt(WDT_VECTOR) WTD_interrupt(void)
 		{
 			tapState = 1;
 			oldTime = regTimer;
-			_setPort(2, LED_HEARTBEAT);
 		}
 		break;
 		
@@ -96,7 +96,7 @@ interrupt(WDT_VECTOR) WTD_interrupt(void)
 		{
 			tapState = 0;
 			delayTime = regTimer - oldTime;
-			_clearPort(2, LED_HEARTBEAT);
+			heartbeatState = 0;
 		}
 		break;
 
@@ -104,6 +104,38 @@ interrupt(WDT_VECTOR) WTD_interrupt(void)
 		tapState = 0;
 		break;
 	}
+
+
+	/* Control the heartbeat */
+	switch(heartbeatState)
+	{
+		case 0:
+		_setPort(2, LED_HEARTBEAT);
+		heartbeatState = 1;
+		heartbeatStartTime = regTimer;
+		break;
+
+		case 1:
+		if(regTimer == heartbeatStartTime + 50)
+		{
+			_clearPort(2, LED_HEARTBEAT);
+			heartbeatState = 2;
+		}
+		break;
+
+		case 2:
+		if(regTimer == heartbeatStartTime + delayTime)
+		{
+			heartbeatState = 0;
+		}
+		break;
+		
+		default:
+			heartbeatState=0;
+
+	}
+
+
 
 	/* Control the output channels, if a button is pressed,
 	 * the channel must be bumped. 
