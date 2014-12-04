@@ -42,15 +42,22 @@ void main(void)
 	uint8_t keyreg = 0;
 	int i =0;
 	
-	/* watchdog timer is pwm timebase */
-	WDTCTL = WDTPW | WDT_MDLY_0_5;			/* Set up watchdog to exp, 0.5ms */
-	IE1 |= WDTIE;							/* enable wtd interrupt */
+	/* watchdog timer */
+	WDTCTL = WDTPW | WDTHOLD;	/* WDT disabled */			
   	
 	/* configure the internal oscillator */
 	BCSCTL1 = RSEL3 + RSEL2 + RSEL1 + RSEL0;	/* set up for 15.25MHz internal oscillator */
 	DCOCTL = DCO2 + DCO1 + DCO0;
 
+	/* set up inputs and outputs */
 	initIO();
+
+	/* configure timerA0 for 1ms interrupt rate */
+	TA0CTL = TASSEL_2 + MC_1 + TACLR ; /* SMCLK source, no division, up to TACCR0, interrupts on */
+	TACCTL0 = CCIE;	/* enable the interrupt on compare */
+	CCR0 = 15250 - 1;	/* count requried for a 1ms interrupt rate */
+
+
 	/* enable interrupts */
 	/* dint(); */ /* opposite is  */
 	eint();
@@ -65,11 +72,10 @@ void main(void)
 	}
 }
 
-
 /* 	
-	this interrupt fires at 2KHz and does the pwm routine
+	this interrupt fires at 1KHz and does the pwm routine
 */
-interrupt(WDT_VECTOR) WTD_interrupt(void)
+interrupt(TIMERA0_VECTOR) WTD_interrupt(void)
 {   
 	uint32_t oldTime;
 	/* increment the time counter */   	
@@ -213,11 +219,11 @@ uint8_t scanKeys(void)
 {
 	uint8_t keys=0;
 	_clearPort(1, BTNC1);
-	brief_pause(10000);
+	brief_pause(50);
 	keys = (P1IN & 0x70);
 	keys = keys >> 3;
 	_setPort(1, BTNC1);
-	brief_pause(10000);
+	brief_pause(50);
 	keys |= (P1IN & 0x70);
 	keys = keys >> 1;
 	return  ((~keys)& 0x3f);
