@@ -50,9 +50,6 @@ volatile int 		mode = 0; /* 0 is normal, 1 is programming */
 
 void main(void)
 {
-	uint8_t keyreg = 0;
-	int i =0;
-	
 	/* watchdog timer */
 	WDTCTL = WDTPW | WDTHOLD;	/* WDT disabled */			
   	

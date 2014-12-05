@@ -22,7 +22,7 @@ void delayMs(uint32_t);
 /* Definitions */
 #define MODESW_MASK 0xC0
 /* MAXSTEPS defines the maximum pattern steps a user program can have */
-#define MAXSTEPS 10
+#define MAXSTEPS 64
 
 /* port 2 definitions */
 #define LED_HEARTBEAT BIT6
