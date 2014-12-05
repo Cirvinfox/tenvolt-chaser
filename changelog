@@ -1,3 +1,8 @@
+2014-12-5 CA Irvin
+	* Added programmability
+	* Added proper tap tempo function
+	* Made it Actually Work (tm)
+
 2014-11-28 Olivia Theze
 	* Normalised code style and comments.
 	* Moved function prototypes and defines to header instead
