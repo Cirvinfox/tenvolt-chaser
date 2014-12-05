@@ -149,10 +149,6 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 			{
 				/* time to go to the next step */
 				/* write the program to the port */
-				temp = P1OUT;
-				temp &= 0xF0;
-				temp |= programArray[programStep];
-				P1OUT = temp;
 				++programStep;
 				if(programStep > programLength - 1)
 				{
@@ -205,40 +201,27 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 
 	/* Control the output channels, if a button is pressed,
 	 * the channel must be bumped. 
-    /*  |)}># */
-	/* if(keyReg & BIT3) */
-	/* { */
-	/* 	_setPort(1, EN_CH1); */
-	/* } */
-	/* else */
-	/* { */
-	/* 	_clearPort(1, EN_CH1); */
-	/* } */
-	/* if(keyReg & BIT0) */
-	/* { */
-	/* 	_setPort(1, EN_CH2); */
-	/* } */
-	/* else */
-	/* { */
-	/* 	_clearPort(1, EN_CH2); */
-	/* } */
-	/* if(keyReg & BIT4) */
-	/* { */
-	/* 	_setPort(1, EN_CH3); */
-	/* } */
-	/* else */
-	/* { */
-	/* 	_clearPort(1, EN_CH3); */
-	/* } */
-	/* if(keyReg & BIT1) */
-	/* { */
-	/* 	_setPort(1, EN_CH4); */
-	/* } */
-	/* else */
-	/* { */
-	/* 	_clearPort(1, EN_CH4); */
-	/* } */
-    /*  */
+    *  |)}># */
+	temp = (P1OUT & 0xF0);
+	temp |= programArray[programStep];
+
+	if(keyReg & BIT3)
+	{
+		temp |= EN_CH1;
+	}
+	if(keyReg & BIT0)
+	{
+		temp |= EN_CH2;
+	}
+	if(keyReg & BIT4)
+	{
+		temp|= EN_CH3;
+	}
+	if(keyReg & BIT1)
+	{
+		temp |= EN_CH4;
+	}
+	P1OUT = temp;
 
 } 
 
