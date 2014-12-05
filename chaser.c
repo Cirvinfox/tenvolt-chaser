@@ -44,6 +44,9 @@ volatile int		programLength = 4;
 volatile uint8_t	programState = 1;
 volatile uint32_t	programCycleStartTime;
 
+volatile int 		programmingState =0;
+
+
 void main(void)
 {
 	uint8_t keyreg = 0;
@@ -157,9 +160,11 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 				programState = 1;
 				tapFlag =0;
 			}
-
-
 			break;
+			
+		case 3:/*  do nothing idle state */
+			nop();
+		break;
 
 		default:
 			programState = 0;			
@@ -191,20 +196,50 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 			heartbeatState = 0;
 		}
 		break;
+
+		case 3: /* do nothing idle state */
+			_setPort(2, LED_HEARTBEAT);
+		break;
 		
 		default:
 			heartbeatState=0;
 
 	}
 
+	/* programming state machine */
+	switch(programmingState)
+	{
+		case 0: /* idle state, wait for entry into the programming routine */
+		if( (keyPulse & BIT6) && (tapState == 0) )
+		{
+			programmingState = 1;
+			programState = 3;
+			heartbeatState = 3;
+		}
+		break;
 
+		case 1:
+		programStep = 0;
+		if( keyPulse & BIT6 )
+		{
+			/* exit from the programming routine */
+			programmingState = 0;
+			programState = 0;
+			heartbeatState = 0;
+		}
+		
+
+		break;
+
+		default:
+		programmingState = 0;
+	}
 
 	/* Control the output channels, if a button is pressed,
 	 * the channel must be bumped. 
     *  |)}># */
 	temp = (P1OUT & 0xF0);
 	temp |= programArray[programStep];
-
 	if(keyReg & BIT3)
 	{
 		temp |= EN_CH1;
@@ -269,7 +304,12 @@ uint8_t scanKeys(void)
 	brief_pause(50);
 	keys |= (P1IN & 0x70);
 	keys = keys >> 1;
-	return  ((~keys)& 0x3f);
+	keys =  ((~keys)& 0x3f);
+	if((P2IN & BIT7) == 0) 
+	{
+		keys |= BIT6;
+	}
+	return keys;
 }
 
 static void __inline__ brief_pause(register unsigned int n)
