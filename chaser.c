@@ -41,11 +41,12 @@ volatile int		tapFlag = 0;
 volatile uint8_t	programArray[MAXSTEPS] = { 0x01, 0x02, 0x04, 0x08};
 volatile int		programStep = 0;
 volatile int		programLength = 4;
-volatile uint8_t	programState = 1;
+volatile uint8_t	programState = 0;
 volatile uint32_t	programCycleStartTime;
 
 volatile int 		programmingState =0;
 
+volatile int 		mode = 0; /* 0 is normal, 1 is programming */
 
 void main(void)
 {
@@ -95,168 +96,189 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 	keyReg = scanKeys();
 	keyPulse = (keyReg ^ keyRegOld) & keyReg;
 
-	
-	/* state machine for setting the LED tempo */
-	switch(tapState)
+	switch(mode)
 	{
 		case 0:
-		if(keyPulse & BIT5)
-		{
-			tapState = 1;
-			oldTime = regTimer;
-		}
-		break;
-		
-		case 1:
-		if(keyPulse & BIT5)
-		{
-			tapState = 0;
-			delayTime = (regTimer - oldTime);
-			heartbeatState = 0;
-		}
-		break;
+			if( (keyPulse & BIT6) && (tapState == 0) )
+			{
+				programStep=0;
+				mode = 1; /* go to programming mode */
+			}
 
-		default:
-		tapState = 0;
-		break;
-	}
-	
-	/* light sequence program state machine */
-	switch ( programState ) 
-	{
-		case 0:	/* program not running */
-			if(keyPulse & BIT2) /* if the startstop button is pressed, run prog */
+			/* state machine for setting the LED tempo */
+			switch(tapState)
 			{
-				programState = 1;
-			}
-			break;
-
-		case 1:	/* program running, cycle start */
-			if ( keyPulse & BIT2 ) /* turn off if we push the startstop button again */
-			{
-				programState = 0;
-			}
-			else
-			{
-				programCycleStartTime = regTimer;
-				programState = 2;
-			}
-			break;
-
-		case 2: /* program running, cycle step	 */
-			if(keyPulse & BIT2) /* turn off if we push the startstop button again */
-			{
-				programState = 0;
-			}
-			else if(tapFlag)
-			{
-				/* time to go to the next step */
-				/* write the program to the port */
-				++programStep;
-				if(programStep > programLength - 1)
+				case 0:
+				 if(keyPulse & BIT5)
+				 {
+					 tapState = 1;
+					 oldTime = regTimer;
+				 }
+				break;
+				
+				case 1:
+				if(keyPulse & BIT5)
 				{
-					programStep = 0;
+					tapState = 0;
+					delayTime = (regTimer - oldTime);
+					heartbeatState = 0;
 				}
-				programState = 1;
-				tapFlag =0;
-			}
-			break;
-			
-		case 3:/*  do nothing idle state */
-			nop();
-		break;
+				break;
 
-		default:
-			programState = 0;			
-			break;
-	}			
+				default:
+				tapState = 0;
+				break;
+			}
+	
+			/* light sequence program state machine */
+			switch ( programState ) 
+			{
+				case 0:	/* program not running */
+					if(keyPulse & BIT2) /* if the startstop button is pressed, run prog */
+					{
+						programState = 1;
+					}
+					break;
+
+				case 1:	/* program running, cycle start */
+					if ( keyPulse & BIT2 ) /* turn off if we push the startstop button again */
+					{
+						programState = 0;
+					}
+					else
+					{
+						programCycleStartTime = regTimer;
+						programState = 2;
+					}
+					break;
+
+				case 2: /* program running, cycle step	 */
+					if(keyPulse & BIT2) /* turn off if we push the startstop button again */
+					{
+						programState = 0;
+					}
+					else if(tapFlag)
+					{
+						/* time to go to the next step */
+						/* write the program to the port */
+						++programStep;
+						if(programStep > programLength - 1)
+						{
+							programStep = 0;
+						}
+						programState = 1;
+						tapFlag =0;
+					}
+					break;
+					
+				default:
+					programState = 0;			
+					break;
+			}			
 	
 
-	/* Control the heartbeat */
-	switch(heartbeatState)
-	{
-		case 0:
-		_setPort(2, LED_HEARTBEAT);
-		heartbeatState = 1;
-		heartbeatStartTime = regTimer;
-		tapFlag = 1;
+			/* Control the heartbeat */
+			switch(heartbeatState)
+			{
+				case 0:
+				_setPort(2, LED_HEARTBEAT);
+				heartbeatState = 1;
+				heartbeatStartTime = regTimer;
+				tapFlag = 1;
+				break;
+
+				case 1:
+				if(regTimer == heartbeatStartTime + 50)
+				{
+					_clearPort(2, LED_HEARTBEAT);
+					heartbeatState = 2;
+				}
+				break;
+
+				case 2:
+				if(regTimer == heartbeatStartTime + delayTime)
+				{
+					heartbeatState = 0;
+				}
+				break;
+
+				
+				default:
+					heartbeatState=0;
+
+			}
+
+			/* Control the output channels, if a button is pressed,
+			 * the channel must be bumped. 
+			*  |)}># */
+			temp = (P1OUT & 0xF0);
+			temp |= programArray[programStep];
+			if(keyReg & BIT3)
+			{
+				temp |= EN_CH1;
+			}
+			if(keyReg & BIT0)
+			{
+				temp |= EN_CH2;
+			}
+			if(keyReg & BIT4)
+			{
+				temp|= EN_CH3;
+			}
+			if(keyReg & BIT1)
+			{
+				temp |= EN_CH4;
+			}
+			P1OUT = temp;
+			
 		break;
 
 		case 1:
-		if(regTimer == heartbeatStartTime + 50)
-		{
-			_clearPort(2, LED_HEARTBEAT);
-			heartbeatState = 2;
-		}
-		break;
-
-		case 2:
-		if(regTimer == heartbeatStartTime + delayTime)
-		{
-			heartbeatState = 0;
-		}
-		break;
-
-		case 3: /* do nothing idle state */
-			_setPort(2, LED_HEARTBEAT);
-		break;
-		
-		default:
-			heartbeatState=0;
-
-	}
-
-	/* programming state machine */
-	switch(programmingState)
-	{
-		case 0: /* idle state, wait for entry into the programming routine */
-		if( (keyPulse & BIT6) && (tapState == 0) )
-		{
-			programmingState = 1;
-			programState = 3;
-			heartbeatState = 3;
-		}
-		break;
-
-		case 1:
-		programStep = 0;
-		if( keyPulse & BIT6 )
-		{
-			/* exit from the programming routine */
-			programmingState = 0;
-			programState = 0;
-			heartbeatState = 0;
-		}
-		
-
+			/* Control the output channels, if a button is pressed,
+			 * the channel must be bumped. 
+			 */
+			temp = (P1OUT );
+			if(keyPulse & BIT3)
+			{
+				temp ^= EN_CH1;
+			}
+			if(keyPulse & BIT0)
+			{
+				temp ^= EN_CH2;
+			}
+			if(keyPulse & BIT4)
+			{
+				temp ^= EN_CH3;
+			}
+			if(keyPulse & BIT1)
+			{
+				temp ^= EN_CH4;
+			}
+			P1OUT = temp;
+			
+			if(keyPulse & BIT2) /* log the state of the lamps when STARTSTOP pressed */
+			{
+				programArray[programStep] = temp & 0x0F;
+				++programStep;
+				P1OUT &= 0xF0;
+			}
+			if((programStep > MAXSTEPS - 1) || (keyPulse & BIT6)) 
+			{
+				/* program mode exit, save the pattern */
+				programLength = programStep;
+				programStep = 0;
+				mode = 0;
+				programState = 0;
+				heartbeatState = 0;
+				tapState   = 0;
+			}
 		break;
 
 		default:
-		programmingState = 0;
-	}
+			mode = 0;
 
-	/* Control the output channels, if a button is pressed,
-	 * the channel must be bumped. 
-    *  |)}># */
-	temp = (P1OUT & 0xF0);
-	temp |= programArray[programStep];
-	if(keyReg & BIT3)
-	{
-		temp |= EN_CH1;
+
 	}
-	if(keyReg & BIT0)
-	{
-		temp |= EN_CH2;
-	}
-	if(keyReg & BIT4)
-	{
-		temp|= EN_CH3;
-	}
-	if(keyReg & BIT1)
-	{
-		temp |= EN_CH4;
-	}
-	P1OUT = temp;
 
 } 
 
@@ -314,11 +336,11 @@ uint8_t scanKeys(void)
 
 static void __inline__ brief_pause(register unsigned int n)
 {
-    __asm__ __volatile__ (
-	"1: \n"
-	" dec	%[n] \n"
-	" jne	1b \n"
-    : [n] "+r"(n));
+	 __asm__ __volatile__ (
+	 "1: \n"
+	 " dec	%[n] \n"
+	 " jne	1b \n"
+	 : [n] "+r"(n));
 }
 	
 
