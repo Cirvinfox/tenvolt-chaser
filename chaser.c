@@ -36,6 +36,7 @@ volatile int		heartbeatState;
 volatile uint32_t   delayTime = 500; /* delay time in  milliseconds */
 volatile uint32_t	heartbeatStartTime;
 volatile uint32_t	oldTime;
+volatile int		tapFlag = 0;
 
 volatile uint8_t	programArray[MAXSTEPS] = { 0x01, 0x02, 0x04, 0x08};
 volatile int		programStep = 0;
@@ -144,7 +145,7 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 			{
 				programState = 0;
 			}
-			else if(regTimer >= (programCycleStartTime + delayTime))
+			else if(tapFlag)
 			{
 				/* time to go to the next step */
 				/* write the program to the port */
@@ -158,6 +159,7 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 					programStep = 0;
 				}
 				programState = 1;
+				tapFlag =0;
 			}
 
 
@@ -176,6 +178,7 @@ interrupt(TIMERA0_VECTOR) TimerA0_interrupt(void)
 		_setPort(2, LED_HEARTBEAT);
 		heartbeatState = 1;
 		heartbeatStartTime = regTimer;
+		tapFlag = 1;
 		break;
 
 		case 1:
